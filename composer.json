@@ -1,0 +1,16 @@
+{
+    "name": "karolkrupa/symfony-paginator",
+    "description": "Paginator for symfony",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Karol Krupa",
+            "email": "karo2krupa@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.0",
+        "symfony/orm-pack": "^1.0"
+    }
+}

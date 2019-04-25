@@ -1,0 +1,178 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: karolkrupa
+ * Date: 06/11/2018
+ * Time: 12:40
+ */
+
+namespace App\Service;
+
+
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Inflector\Inflector;
+use Doctrine\ORM\QueryBuilder;
+use Symfony\Component\HttpFoundation\Request;
+
+class Paginator
+{
+    private $qb;
+    private $itemsPerPage = 10;
+    private $page = 1;
+    private $result = null;
+    private $totalItems = null;
+    private $orderBy = null;
+    private $orderType = 'ASC';
+    private $distinctAlias;
+
+    const EMPTY_RESPONSE = [
+        'page' => 1,
+        'total_items' => 0,
+        'items_per_page' => 0,
+        'pages_count' => 0,
+        'data' => []
+    ];
+
+    public function __construct(QueryBuilder $qb, $distinctAlias)
+    {
+        $this->qb = $qb;
+        $this->distinctAlias = $distinctAlias;
+        $this->result = new ArrayCollection();
+    }
+
+    public function handleRequest(Request $request) {
+        $this->setItemsPerPage($request->get('items_per_page', 10));
+        $this->setPage($request->get('page', 1));
+        $this->setOrderBy($request->get('order_by'));
+        $this->setOrderType($request->get('order_type'));
+        return $this;
+    }
+
+    public function createResponse($customData = null) {
+        $response = [
+            'page' => $this->getPage(),
+            'total_items' => intval($this->getTotalCount()),
+            'items_per_page' => $customData? count($customData) : count($this->getItems()),
+            'pages_count' => $this->getPagesCount(),
+            'data' => $customData? $customData : $this->getItems()
+        ];
+
+        return $response;
+    }
+
+    public function getTotalCount() {
+        if($this->totalItems) {
+            return $this->totalItems;
+        }
+        $qb = clone $this->qb;
+        $qb->select("COUNT(DISTINCT $this->distinctAlias) as count");
+        $this->totalItems = $qb->getQuery()->getScalarResult()[0]['count'];
+        return $this->totalItems;
+    }
+
+    public function getItemsPerPage() {
+        return $this->itemsPerPage;
+    }
+
+    public function setItemsPerPage($count) {
+        $this->totalItems = null;
+        $this->result->clear();
+        $this->itemsPerPage = $count;
+    }
+
+    public function getPage() {
+        return $this->page;
+    }
+
+    public function setPage($page) {
+        $this->totalItems = null;
+        $this->result->clear();
+        if($page > $this->getPagesCount()) {
+            $this->page = $this->getPagesCount();
+        }else {
+            $this->page = $page;
+        }
+    }
+
+    public function setOrderBy($orderBy = null) {
+        $this->totalItems = null;
+        $this->result->clear();
+        if($orderBy !== null) {
+            $this->orderBy = $orderBy;
+        }
+    }
+
+    /**
+     * @return null
+     */
+    public function getOrderBy()
+    {
+        return $this->orderBy? Inflector::camelize($this->orderBy) : $this->orderBy;
+    }
+
+    public function setOrderType($orderType = null) {
+        $this->totalItems = null;
+        $this->result->clear();
+        if($orderType !== null) {
+            $this->orderType = $orderType;
+        }
+    }
+
+    /**
+     * @return null
+     */
+    public function getOrderType()
+    {
+        return $this->orderType;
+    }
+
+    public function execute() {
+        $qb = clone $this->qb;
+        $qb->setFirstResult($this->getFirstResultNumber());
+        if ($this->getOrderBy() !== null) {
+            if (strpos($this->getOrderBy(), '.') !== false) {
+                $qb->join($this->distinctAlias . '.' . $this->getJoinEntityFromOrderBy(), 'joinEntityAlias');
+                $qb->addOrderBy('joinEntityAlias.' . $this->getJoinEntityFieldFromOrderBy(), $this->getOrderType());
+            } else {
+                $qb->addOrderBy($this->distinctAlias . '.' . $this->getOrderBy(), $this->getOrderType());
+            }
+        }
+        if($this->itemsPerPage > 0) {
+            $qb->setMaxResults($this->itemsPerPage);
+        }
+        $items = new \Doctrine\ORM\Tools\Pagination\Paginator($qb, true);
+        foreach ($items as $item) {
+            $this->result->add($item);
+        }
+        return $this;
+    }
+
+    public function getJoinEntityFromOrderBy()
+    {
+        return explode('.', $this->getOrderBy())[0];
+    }
+
+    public function getJoinEntityFieldFromOrderBy()
+    {
+        return explode('.', $this->getOrderBy())[1];
+    }
+
+    public function getItems() {
+        if($this->result->count() < 1) {
+            $this->execute();
+        }
+        return $this->result;
+    }
+
+    public function getPagesCount() {
+        return ceil($this->getTotalCount()/$this->itemsPerPage);
+    }
+
+    private function getFirstResultNumber() {
+        if($this->page <= 1) {
+            return 0;
+        }else {
+            return ($this->page - 1)*$this->itemsPerPage;
+        }
+    }
+}
