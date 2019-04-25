@@ -6,15 +6,17 @@
  * Time: 12:40
  */
 
-namespace App\Service;
+namespace KarolKrupa\SymfonyPaginator;
 
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Inflector\Inflector;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
-class Paginator
+class Paginator implements PaginatorInterface
 {
     private $qb;
     private $itemsPerPage = 10;
@@ -40,15 +42,16 @@ class Paginator
         $this->result = new ArrayCollection();
     }
 
-    public function handleRequest(Request $request) {
+    public function handleRequest(Request $request) : self {
         $this->setItemsPerPage($request->get('items_per_page', 10));
         $this->setPage($request->get('page', 1));
         $this->setOrderBy($request->get('order_by'));
         $this->setOrderType($request->get('order_type'));
+
         return $this;
     }
 
-    public function createResponse($customData = null) {
+    public function createResponse($customData = null) : Response {
         $response = [
             'page' => $this->getPage(),
             'total_items' => intval($this->getTotalCount()),
@@ -70,21 +73,21 @@ class Paginator
         return $this->totalItems;
     }
 
-    public function getItemsPerPage() {
+    public function getItemsPerPage() : int {
         return $this->itemsPerPage;
     }
 
-    public function setItemsPerPage($count) {
+    public function setItemsPerPage(int $count) : self {
         $this->totalItems = null;
         $this->result->clear();
         $this->itemsPerPage = $count;
     }
 
-    public function getPage() {
+    public function getPage() : int {
         return $this->page;
     }
 
-    public function setPage($page) {
+    public function setPage(int $page) : slef {
         $this->totalItems = null;
         $this->result->clear();
         if($page > $this->getPagesCount()) {
@@ -94,7 +97,7 @@ class Paginator
         }
     }
 
-    public function setOrderBy($orderBy = null) {
+    public function setOrderBy(string $orderBy = null) {
         $this->totalItems = null;
         $this->result->clear();
         if($orderBy !== null) {
@@ -105,12 +108,12 @@ class Paginator
     /**
      * @return null
      */
-    public function getOrderBy()
+    public function getOrderBy() : string
     {
         return $this->orderBy? Inflector::camelize($this->orderBy) : $this->orderBy;
     }
 
-    public function setOrderType($orderType = null) {
+    public function setOrderType(string $orderType = null) {
         $this->totalItems = null;
         $this->result->clear();
         if($orderType !== null) {
@@ -121,7 +124,7 @@ class Paginator
     /**
      * @return null
      */
-    public function getOrderType()
+    public function getOrderType() : string
     {
         return $this->orderType;
     }
@@ -147,24 +150,14 @@ class Paginator
         return $this;
     }
 
-    public function getJoinEntityFromOrderBy()
-    {
-        return explode('.', $this->getOrderBy())[0];
-    }
-
-    public function getJoinEntityFieldFromOrderBy()
-    {
-        return explode('.', $this->getOrderBy())[1];
-    }
-
-    public function getItems() {
+    public function getItems() : Collection {
         if($this->result->count() < 1) {
             $this->execute();
         }
         return $this->result;
     }
 
-    public function getPagesCount() {
+    public function getPagesCount() : int {
         return ceil($this->getTotalCount()/$this->itemsPerPage);
     }
 
@@ -174,5 +167,15 @@ class Paginator
         }else {
             return ($this->page - 1)*$this->itemsPerPage;
         }
+    }
+
+    private function getJoinEntityFromOrderBy()
+    {
+        return explode('.', $this->getOrderBy())[0];
+    }
+
+    private function getJoinEntityFieldFromOrderBy()
+    {
+        return explode('.', $this->getOrderBy())[1];
     }
 }
