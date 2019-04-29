@@ -29,7 +29,7 @@ interface PaginatorInterface {
     public function execute();
 
     public function handleRequest(Request $request);
-    public function createResponse($customData = null) : Response;
+    public function createResponse($customData = null) : array;
 
     public function getItems() : Collection;
 }

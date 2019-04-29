@@ -52,7 +52,7 @@ class Paginator implements PaginatorInterface
         return $this;
     }
 
-    public function createResponse($customData = null) : Response {
+    public function createResponse($customData = null) : array {
         $response = [
             'page' => $this->getPage(),
             'total_items' => intval($this->getTotalCount()),
@@ -61,7 +61,7 @@ class Paginator implements PaginatorInterface
             'data' => $customData? $customData : $this->getItems()
         ];
 
-        return new JsonResponse($response);
+        return $response;
     }
 
     public function getTotalCount() {
