@@ -13,6 +13,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Inflector\Inflector;
 use Doctrine\ORM\QueryBuilder;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -60,7 +61,7 @@ class Paginator implements PaginatorInterface
             'data' => $customData? $customData : $this->getItems()
         ];
 
-        return $response;
+        return new JsonResponse($response);
     }
 
     public function getTotalCount() {
@@ -108,7 +109,7 @@ class Paginator implements PaginatorInterface
     /**
      * @return null
      */
-    public function getOrderBy() : string
+    public function getOrderBy() : ?string
     {
         return $this->orderBy? Inflector::camelize($this->orderBy) : $this->orderBy;
     }

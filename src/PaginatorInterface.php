@@ -22,7 +22,7 @@ interface PaginatorInterface {
     public function getOrderBy() : string;
 
     public function setOrderType(string $type);
-    public function getOrderType() : string;
+    public function getOrderType() : ?string;
 
     public function getPagesCount() : int;
 
