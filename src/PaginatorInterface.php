@@ -19,10 +19,10 @@ interface PaginatorInterface {
     public function getItemsPerPage() : int;
 
     public function setOrderBy(string $orderBy = null);
-    public function getOrderBy() : string;
+    public function getOrderBy() : ?string;
 
     public function setOrderType(string $type);
-    public function getOrderType() : ?string;
+    public function getOrderType() : string;
 
     public function getPagesCount() : int;
 
