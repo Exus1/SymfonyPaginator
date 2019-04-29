@@ -1,6 +1,6 @@
 <?php
 
-namespace KarolKrupa\SymfonyPaginator;
+namespace karolkrupa;
 
 
 use Doctrine\Common\Collections\Collection;

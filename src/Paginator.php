@@ -6,7 +6,7 @@
  * Time: 12:40
  */
 
-namespace KarolKrupa\SymfonyPaginator;
+namespace karolkrupa;
 
 
 use Doctrine\Common\Collections\ArrayCollection;
