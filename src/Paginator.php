@@ -82,13 +82,15 @@ class Paginator implements PaginatorInterface
         $this->totalItems = null;
         $this->result->clear();
         $this->itemsPerPage = $count;
+        
+        return $this;
     }
 
     public function getPage() : int {
         return $this->page;
     }
 
-    public function setPage(int $page) : slef {
+    public function setPage(int $page) : self {
         $this->totalItems = null;
         $this->result->clear();
         if($page > $this->getPagesCount()) {
@@ -96,6 +98,8 @@ class Paginator implements PaginatorInterface
         }else {
             $this->page = $page;
         }
+        
+        return $this;
     }
 
     public function setOrderBy(string $orderBy = null) {
