@@ -27,6 +27,7 @@ class Paginator implements PaginatorInterface
     private $orderBy = null;
     private $orderType = 'ASC';
     private $distinctAlias;
+    private $customData = false;
 
     const EMPTY_RESPONSE = [
         'page' => 1,
@@ -43,7 +44,8 @@ class Paginator implements PaginatorInterface
         $this->result = new ArrayCollection();
     }
 
-    public function handleRequest(Request $request) : self {
+    public function handleRequest(Request $request): self
+    {
         $this->setItemsPerPage($request->get('items_per_page', 10));
         $this->setPage($request->get('page', 1));
         $this->setOrderBy($request->get('order_by'));
@@ -52,20 +54,26 @@ class Paginator implements PaginatorInterface
         return $this;
     }
 
-    public function createResponse($customData = null) : array {
+    public function createResponse($customData = null): array
+    {
+        if($customData !== null) {
+            $this->setCustomData($customData);
+        }
+
         $response = [
             'page' => $this->getPage(),
             'total_items' => intval($this->getTotalCount()),
-            'items_per_page' => $customData? count($customData) : count($this->getItems()),
+            'items_per_page' => count($this->getItems()),
             'pages_count' => $this->getPagesCount(),
-            'data' => $customData? $customData : $this->getItems()
+            'data' => $this->getItems()
         ];
 
         return $response;
     }
 
-    public function getTotalCount() {
-        if($this->totalItems) {
+    public function getTotalCount()
+    {
+        if ($this->totalItems) {
             return $this->totalItems;
         }
         $qb = clone $this->qb;
@@ -74,38 +82,43 @@ class Paginator implements PaginatorInterface
         return $this->totalItems;
     }
 
-    public function getItemsPerPage() : int {
+    public function getItemsPerPage(): int
+    {
         return $this->itemsPerPage;
     }
 
-    public function setItemsPerPage(int $count) : self {
+    public function setItemsPerPage(int $count): self
+    {
         $this->totalItems = null;
         $this->result->clear();
         $this->itemsPerPage = $count;
-        
+
         return $this;
     }
 
-    public function getPage() : int {
+    public function getPage(): int
+    {
         return $this->page;
     }
 
-    public function setPage(int $page) : self {
+    public function setPage(int $page): self
+    {
         $this->totalItems = null;
         $this->result->clear();
-        if($page > $this->getPagesCount()) {
+        if ($page > $this->getPagesCount()) {
             $this->page = $this->getPagesCount();
-        }else {
+        } else {
             $this->page = $page;
         }
-        
+
         return $this;
     }
 
-    public function setOrderBy(string $orderBy = null) {
+    public function setOrderBy(string $orderBy = null)
+    {
         $this->totalItems = null;
         $this->result->clear();
-        if($orderBy !== null) {
+        if ($orderBy !== null) {
             $this->orderBy = $orderBy;
         }
     }
@@ -113,15 +126,16 @@ class Paginator implements PaginatorInterface
     /**
      * @return null
      */
-    public function getOrderBy() : ?string
+    public function getOrderBy(): ?string
     {
-        return $this->orderBy? Inflector::camelize($this->orderBy) : $this->orderBy;
+        return $this->orderBy ? Inflector::camelize($this->orderBy) : $this->orderBy;
     }
 
-    public function setOrderType(string $orderType = null) {
+    public function setOrderType(string $orderType = null)
+    {
         $this->totalItems = null;
         $this->result->clear();
-        if($orderType !== null) {
+        if ($orderType !== null) {
             $this->orderType = $orderType;
         }
     }
@@ -129,12 +143,14 @@ class Paginator implements PaginatorInterface
     /**
      * @return null
      */
-    public function getOrderType() : string
+    public function getOrderType(): string
     {
         return $this->orderType;
     }
 
-    public function execute() {
+    public function execute()
+    {
+        $this->customData = false;
         $qb = clone $this->qb;
         $qb->setFirstResult($this->getFirstResultNumber());
         if ($this->getOrderBy() !== null) {
@@ -145,7 +161,7 @@ class Paginator implements PaginatorInterface
                 $qb->addOrderBy($this->distinctAlias . '.' . $this->getOrderBy(), $this->getOrderType());
             }
         }
-        if($this->itemsPerPage > 0) {
+        if ($this->itemsPerPage > 0) {
             $qb->setMaxResults($this->itemsPerPage);
         }
         $items = new \Doctrine\ORM\Tools\Pagination\Paginator($qb, true);
@@ -155,22 +171,32 @@ class Paginator implements PaginatorInterface
         return $this;
     }
 
-    public function getItems() : Collection {
-        if($this->result->count() < 1) {
+    public function getItems(): Collection
+    {
+        if ($this->result->count() < 1) {
             $this->execute();
         }
         return $this->result;
     }
 
-    public function getPagesCount() : int {
-        return ceil($this->getTotalCount()/$this->itemsPerPage);
+    public function getPagesCount(): int
+    {
+        return ceil($this->getTotalCount() / $this->itemsPerPage);
     }
 
-    private function getFirstResultNumber() {
-        if($this->page <= 1) {
+    private function setCustomData(ArrayCollection $customData)
+    {
+        $this->customData = true;
+        $this->result = $customData;
+        $this->totalItems = $customData->count();
+    }
+
+    private function getFirstResultNumber()
+    {
+        if ($this->page <= 1) {
             return 0;
-        }else {
-            return ($this->page - 1)*$this->itemsPerPage;
+        } else {
+            return ($this->page - 1) * $this->itemsPerPage;
         }
     }
 
