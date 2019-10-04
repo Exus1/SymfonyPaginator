@@ -63,7 +63,7 @@ class Paginator implements PaginatorInterface
         $response = [
             'page' => $this->getPage(),
             'total_items' => intval($this->getTotalCount()),
-            'items_per_page' => count($this->getItems()),
+            'items_per_page' => $this->getItemsPerPage(),
             'pages_count' => $this->getPagesCount(),
             'data' => $this->getItems()
         ];
