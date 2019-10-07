@@ -188,7 +188,7 @@ class Paginator implements PaginatorInterface
     {
         $this->customData = true;
         $this->result = $customData;
-        $this->totalItems = $customData->count();
+        //$this->totalItems = $customData->count();
     }
 
     private function getFirstResultNumber()
