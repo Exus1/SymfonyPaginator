@@ -105,11 +105,7 @@ class Paginator implements PaginatorInterface
     {
         $this->totalItems = null;
         $this->result->clear();
-        if ($page > $this->getPagesCount()) {
-            $this->page = $this->getPagesCount();
-        } else {
-            $this->page = $page;
-        }
+        $this->page = $page;
 
         return $this;
     }
